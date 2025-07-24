@@ -5,6 +5,7 @@ import dev.amir.dragon.model.MissionStatus;
 import dev.amir.dragon.model.Rocket;
 import dev.amir.dragon.model.RocketStatus;
 import dev.amir.dragon.repository.MissionRepository;
+import dev.amir.dragon.repository.RocketRepository;
 
 import java.util.List;
 
@@ -13,9 +14,11 @@ import java.util.List;
  */
 public class MissionService {
     private final MissionRepository missionRepository;
+    private final RocketRepository rocketRepository;
 
-    public MissionService(MissionRepository missionRepository) {
+    public MissionService(MissionRepository missionRepository, RocketRepository rocketRepository) {
         this.missionRepository = missionRepository;
+        this.rocketRepository = rocketRepository;
     }
 
     public Mission create(String name) {
@@ -30,6 +33,24 @@ public class MissionService {
         validateStatusTransition(existingMission, newStatus);
         existingMission.setStatus(newStatus);
         Mission modifiedMission = missionRepository.save(existingMission);
+        return modifiedMission != null;
+    }
+
+    public boolean assignRocketToMission(String missionId, String rocketId) {
+        Mission existingMission = missionRepository.getByRocketId(rocketId);
+        if (existingMission != null) {
+            return false;
+        }
+
+        Mission mission = missionRepository.getById(missionId);
+        if (mission.getStatus() == MissionStatus.ENDED) {
+            throw new IllegalStateException("Cannot assign rockets to an ended mission");
+        }
+        Rocket rocket = rocketRepository.getById(rocketId);
+
+        mission.addRockets(List.of(rocket));
+        updateMissionStatusBasedOnRockets(mission);
+        Mission modifiedMission = missionRepository.save(mission);
         return modifiedMission != null;
     }
 
@@ -60,6 +81,15 @@ public class MissionService {
                     throw new IllegalStateException("Cannot set mission to ENDED when rockets are assigned");
                 }
             }
+        }
+    }
+
+    private void updateMissionStatusBasedOnRockets(Mission mission) {
+        List<Rocket> rockets = mission.getRockets();
+        if (hasRocketsInRepair(rockets)) {
+            mission.setStatus(MissionStatus.PENDING);
+        } else {
+            mission.setStatus(MissionStatus.IN_PROGRESS);
         }
     }
 

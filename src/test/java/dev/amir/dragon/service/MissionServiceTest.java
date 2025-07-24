@@ -5,6 +5,7 @@ import dev.amir.dragon.model.MissionStatus;
 import dev.amir.dragon.model.Rocket;
 import dev.amir.dragon.model.RocketStatus;
 import dev.amir.dragon.repository.MissionRepository;
+import dev.amir.dragon.repository.RocketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,11 +42,14 @@ class MissionServiceTest {
     @Mock
     private MissionRepository missionRepository;
 
+    @Mock
+    private RocketRepository rocketRepository;
+
     private MissionService missionService;
 
     @BeforeEach
     void setUp() {
-        this.missionService = new MissionService(missionRepository);
+        this.missionService = new MissionService(missionRepository, rocketRepository);
     }
 
     @Test
@@ -175,6 +180,100 @@ class MissionServiceTest {
         assertNotEquals(newStatus, existingMission.getStatus());
         verify(missionRepository).getById(eq(missionId));
         verify(missionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should return false when rocket already assigned to a mission")
+    void shouldReturnFalseWhenRocketAlreadyAssignedToAMission() {
+        // Given
+        String missionId = "Mission ID";
+        String rocketId = "Rocket ID";
+        Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
+        when(missionRepository.getByRocketId(rocketId)).thenReturn(existingMission);
+
+        // When
+        boolean actual = missionService.assignRocketToMission(missionId, rocketId);
+
+        // Then
+        assertFalse(actual);
+        assertEquals(MissionStatus.SCHEDULED, existingMission.getStatus());
+        verify(missionRepository).getByRocketId(eq(rocketId));
+        verify(missionRepository, never()).getById(eq(missionId));
+        verify(rocketRepository, never()).getById(eq(rocketId));
+        verify(missionRepository, never()).save(eq(existingMission));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when assigning to ended mission")
+    void shouldThrowExceptionWhenAssigningToEndedMission() {
+        // Given
+        String missionId = "Mission ID";
+        String rocketId = "Rocket ID";
+        Mission existingMission = buildDefaultMission(missionId, MissionStatus.ENDED);
+        when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
+        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+
+        // When & Then
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.assignRocketToMission(missionId, rocketId));
+        assertEquals("Cannot assign rockets to an ended mission", exception.getMessage());
+        assertEquals(MissionStatus.ENDED, existingMission.getStatus());
+        verify(missionRepository).getByRocketId(eq(rocketId));
+        verify(missionRepository).getById(eq(missionId));
+        verify(rocketRepository, never()).getById(eq(rocketId));
+        verify(missionRepository, never()).save(eq(existingMission));
+    }
+
+    @Test
+    @DisplayName("Should update mission status to PENDING when rocket in repair")
+    void shouldUpdateMissionStatusToPendingWhenRocketInRepair() {
+        // Given
+        String missionId = "Mission ID";
+        String rocketId = "Rocket ID";
+        Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
+        Rocket existingRocket = buildDefaultRocket();
+        existingRocket.setStatus(RocketStatus.IN_REPAIR);
+        when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
+        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(rocketRepository.getById(rocketId)).thenReturn(existingRocket);
+        when(missionRepository.save(any(Mission.class))).thenReturn(existingMission);
+
+        // When
+        boolean actual = missionService.assignRocketToMission(missionId, rocketId);
+
+        // Then
+        assertTrue(actual);
+        assertTrue(existingMission.getRockets().contains(existingRocket));
+        assertEquals(MissionStatus.PENDING, existingMission.getStatus());
+        verify(missionRepository).getByRocketId(eq(rocketId));
+        verify(missionRepository).getById(eq(missionId));
+        verify(rocketRepository).getById(eq(rocketId));
+        verify(missionRepository).save(eq(existingMission));
+    }
+
+    @Test
+    @DisplayName("Should update mission status to IN_PROGRESS when rocket assigned")
+    void shouldUpdateMissionStatusToInProgressWhenRocketAssigned() {
+        // Given
+        String missionId = "Mission ID";
+        String rocketId = "Rocket ID";
+        Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
+        Rocket existingRocket = buildDefaultRocket();
+        when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
+        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(rocketRepository.getById(rocketId)).thenReturn(existingRocket);
+        when(missionRepository.save(any(Mission.class))).thenReturn(existingMission);
+
+        // When
+        boolean actual = missionService.assignRocketToMission(missionId, rocketId);
+
+        // Then
+        assertTrue(actual);
+        assertTrue(existingMission.getRockets().contains(existingRocket));
+        assertEquals(MissionStatus.IN_PROGRESS, existingMission.getStatus());
+        verify(missionRepository).getByRocketId(eq(rocketId));
+        verify(missionRepository).getById(eq(missionId));
+        verify(rocketRepository).getById(eq(rocketId));
+        verify(missionRepository).save(eq(existingMission));
     }
 
     private Mission buildDefaultMission(String id, MissionStatus status) {
