@@ -5,5 +5,6 @@ package dev.amir.dragon.model;
  */
 public enum RocketStatus {
     ON_GROUND,
-    IN_SPACE
+    IN_SPACE,
+    IN_REPAIR
 }
