@@ -7,4 +7,6 @@ import dev.amir.dragon.model.Rocket;
  */
 public interface RocketRepository {
     Rocket save(Rocket rocket);
+
+    Rocket getById(String id);
 }

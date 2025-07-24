@@ -20,4 +20,11 @@ class RocketService {
         newRocket.setStatus(RocketStatus.ON_GROUND);
         return rocketRepository.save(newRocket);
     }
+
+    public boolean changeStatus(String rocketId, RocketStatus newStatus) {
+        Rocket existingRocket = rocketRepository.getById(rocketId);
+        existingRocket.setStatus(newStatus);
+        Rocket modifiedRocket = rocketRepository.save(existingRocket);
+        return modifiedRocket != null;
+    }
 }

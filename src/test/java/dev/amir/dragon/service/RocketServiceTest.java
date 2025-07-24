@@ -13,7 +13,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,5 +57,34 @@ class RocketServiceTest {
         Rocket createdRocket = rocketCaptor.getValue();
         assertEquals(RocketStatus.ON_GROUND, createdRocket.getStatus());
         assertEquals(rocketName, createdRocket.getName());
+    }
+
+    @Test
+    @DisplayName("Should change the current rocket status")
+    void shouldChangeTheCurrentRocketStatus() {
+        // Given
+        String rocketId = "Rocket ID";
+        RocketStatus newStatus = RocketStatus.IN_SPACE;
+        Rocket existingRocket = buildDefaultRocket(rocketId);
+        when(rocketRepository.getById(anyString())).thenReturn(existingRocket);
+        when(rocketRepository.save(any())).thenReturn(new Rocket());
+
+        // When
+        boolean actual = rocketService.changeStatus(rocketId, newStatus);
+
+        // Then
+        assertTrue(actual);
+        verify(rocketRepository).getById(eq(rocketId));
+        verify(rocketRepository).save(rocketCaptor.capture());
+        Rocket modifiedRocket = rocketCaptor.getValue();
+        assertEquals(newStatus, modifiedRocket.getStatus());
+    }
+
+    private Rocket buildDefaultRocket(String id) {
+        Rocket rocket = new Rocket();
+        rocket.setId(id);
+        rocket.setName("Dragon 1");
+        rocket.setStatus(RocketStatus.ON_GROUND);
+        return rocket;
     }
 }
