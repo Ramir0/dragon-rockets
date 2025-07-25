@@ -7,10 +7,10 @@ import dev.amir.dragon.repository.RocketRepository;
 /**
  * Service class to perform rocket operations.
  */
-class RocketService {
+public class RocketService {
     private final RocketRepository rocketRepository;
 
-    RocketService(RocketRepository rocketRepository) {
+    public RocketService(RocketRepository rocketRepository) {
         this.rocketRepository = rocketRepository;
     }
 

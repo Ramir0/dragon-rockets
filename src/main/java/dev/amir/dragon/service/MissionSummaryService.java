@@ -6,7 +6,6 @@ import dev.amir.dragon.model.Mission;
 import dev.amir.dragon.model.Rocket;
 import dev.amir.dragon.repository.MissionRepository;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +29,6 @@ public class MissionSummaryService {
     private MissionSummary convertToMissionSummary(Mission mission) {
         List<RocketSummary> rocketSummaries = mission.getRockets().stream()
                 .map(this::convertToRocketSummary)
-                .sorted(Comparator.comparing(RocketSummary::name))
                 .collect(Collectors.toList());
 
         return new MissionSummary(mission.getName(), mission.getStatus(), rocketSummaries);
@@ -46,7 +44,7 @@ public class MissionSummaryService {
             return rocketsNumberComparison;
         }
 
-        // If same rockets number, compare by name alphabetically
-        return mission1.name().compareToIgnoreCase(mission2.name());
+        // If same rockets number, compare by name descending alphabetical order
+        return mission2.name().compareToIgnoreCase(mission1.name());
     }
 }

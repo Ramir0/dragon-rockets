@@ -89,8 +89,8 @@ class MissionSummaryServiceTest {
     }
 
     @Test
-    @DisplayName("Should generate summary with correct sorting by mission name")
-    void shouldGenerateSummaryWithCorrectSortingByMissionName() {
+    @DisplayName("Should generate summary with correct sorting by mission name in descending alphabetical order")
+    void shouldGenerateSummaryWithCorrectSortingByMissionNameInDescendingAlphabeticalOrder() {
         // Given
         Rocket rocketA1 = buildRocket("Dragon 1", RocketStatus.ON_GROUND);
         Mission missionA = buildMission("Vertical Landing 1", MissionStatus.SCHEDULED, List.of(rocketA1));
@@ -109,9 +109,9 @@ class MissionSummaryServiceTest {
         assertEquals(3, summary.size());
         // Mission: Luna 2
         MissionSummary missionSummary1 = summary.removeFirst();
-        assertEquals(missionB.getName(), missionSummary1.name());
-        assertEquals(missionB.getStatus(), missionSummary1.status());
-        assertEquals(missionB.getRockets().size(), missionSummary1.rockets().size());
+        assertEquals(missionA.getName(), missionSummary1.name());
+        assertEquals(missionA.getStatus(), missionSummary1.status());
+        assertEquals(missionA.getRockets().size(), missionSummary1.rockets().size());
         // Mission: Mars 1
         MissionSummary missionSummary2 = summary.removeFirst();
         assertEquals(missionC.getName(), missionSummary2.name());
@@ -119,9 +119,9 @@ class MissionSummaryServiceTest {
         assertEquals(missionC.getRockets().size(), missionSummary2.rockets().size());
         // Mission: Vertical Landing 1
         MissionSummary missionSummary3 = summary.removeFirst();
-        assertEquals(missionA.getName(), missionSummary3.name());
-        assertEquals(missionA.getStatus(), missionSummary3.status());
-        assertEquals(missionA.getRockets().size(), missionSummary3.rockets().size());
+        assertEquals(missionB.getName(), missionSummary3.name());
+        assertEquals(missionB.getStatus(), missionSummary3.status());
+        assertEquals(missionB.getRockets().size(), missionSummary3.rockets().size());
     }
 
     private Mission buildMission(String name, MissionStatus status, List<Rocket> rockets) {
