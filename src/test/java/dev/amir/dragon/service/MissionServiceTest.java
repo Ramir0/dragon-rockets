@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -199,7 +200,7 @@ class MissionServiceTest {
         assertEquals(MissionStatus.SCHEDULED, existingMission.getStatus());
         verify(missionRepository).getByRocketId(eq(rocketId));
         verify(missionRepository, never()).getById(eq(missionId));
-        verify(rocketRepository, never()).getById(eq(rocketId));
+        verify(rocketRepository, never()).findById(eq(rocketId));
         verify(missionRepository, never()).save(eq(existingMission));
     }
 
@@ -219,7 +220,7 @@ class MissionServiceTest {
         assertEquals(MissionStatus.ENDED, existingMission.getStatus());
         verify(missionRepository).getByRocketId(eq(rocketId));
         verify(missionRepository).getById(eq(missionId));
-        verify(rocketRepository, never()).getById(eq(rocketId));
+        verify(rocketRepository, never()).findById(eq(rocketId));
         verify(missionRepository, never()).save(eq(existingMission));
     }
 
@@ -234,7 +235,7 @@ class MissionServiceTest {
         existingRocket.setStatus(RocketStatus.IN_REPAIR);
         when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
         when(missionRepository.getById(missionId)).thenReturn(existingMission);
-        when(rocketRepository.getById(rocketId)).thenReturn(existingRocket);
+        when(rocketRepository.findById(rocketId)).thenReturn(Optional.of(existingRocket));
         when(missionRepository.save(any(Mission.class))).thenReturn(existingMission);
 
         // When
@@ -246,7 +247,7 @@ class MissionServiceTest {
         assertEquals(MissionStatus.PENDING, existingMission.getStatus());
         verify(missionRepository).getByRocketId(eq(rocketId));
         verify(missionRepository).getById(eq(missionId));
-        verify(rocketRepository).getById(eq(rocketId));
+        verify(rocketRepository).findById(eq(rocketId));
         verify(missionRepository).save(eq(existingMission));
     }
 
@@ -260,7 +261,7 @@ class MissionServiceTest {
         Rocket existingRocket = buildDefaultRocket();
         when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
         when(missionRepository.getById(missionId)).thenReturn(existingMission);
-        when(rocketRepository.getById(rocketId)).thenReturn(existingRocket);
+        when(rocketRepository.findById(rocketId)).thenReturn(Optional.of(existingRocket));
         when(missionRepository.save(any(Mission.class))).thenReturn(existingMission);
 
         // When
@@ -272,7 +273,7 @@ class MissionServiceTest {
         assertEquals(MissionStatus.IN_PROGRESS, existingMission.getStatus());
         verify(missionRepository).getByRocketId(eq(rocketId));
         verify(missionRepository).getById(eq(missionId));
-        verify(rocketRepository).getById(eq(rocketId));
+        verify(rocketRepository).findById(eq(rocketId));
         verify(missionRepository).save(eq(existingMission));
     }
 

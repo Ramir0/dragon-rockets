@@ -22,7 +22,8 @@ class RocketService {
     }
 
     public boolean changeStatus(String rocketId, RocketStatus newStatus) {
-        Rocket existingRocket = rocketRepository.getById(rocketId);
+        Rocket existingRocket = rocketRepository.findById(rocketId)
+                .orElseThrow(() -> new IllegalStateException(String.format("Rocket with ID: %s was not found", rocketId)));
         existingRocket.setStatus(newStatus);
         Rocket modifiedRocket = rocketRepository.save(existingRocket);
         return modifiedRocket != null;

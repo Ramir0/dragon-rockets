@@ -46,7 +46,8 @@ public class MissionService {
         if (mission.getStatus() == MissionStatus.ENDED) {
             throw new IllegalStateException("Cannot assign rockets to an ended mission");
         }
-        Rocket rocket = rocketRepository.getById(rocketId);
+        Rocket rocket = rocketRepository.findById(rocketId)
+                .orElseThrow(() -> new IllegalStateException(String.format("Rocket with ID: %s was not found", rocketId)));
 
         mission.addRockets(List.of(rocket));
         updateMissionStatusBasedOnRockets(mission);

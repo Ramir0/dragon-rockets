@@ -12,11 +12,15 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -63,10 +67,10 @@ class RocketServiceTest {
     @DisplayName("Should change the current rocket status")
     void shouldChangeTheCurrentRocketStatus() {
         // Given
-        String rocketId = "Rocket ID";
+        String rocketId = "RocketID";
         RocketStatus newStatus = RocketStatus.IN_SPACE;
         Rocket existingRocket = buildDefaultRocket(rocketId);
-        when(rocketRepository.getById(anyString())).thenReturn(existingRocket);
+        when(rocketRepository.findById(anyString())).thenReturn(Optional.of(existingRocket));
         when(rocketRepository.save(any())).thenReturn(new Rocket());
 
         // When
@@ -74,10 +78,25 @@ class RocketServiceTest {
 
         // Then
         assertTrue(actual);
-        verify(rocketRepository).getById(eq(rocketId));
+        verify(rocketRepository).findById(eq(rocketId));
         verify(rocketRepository).save(rocketCaptor.capture());
         Rocket modifiedRocket = rocketCaptor.getValue();
         assertEquals(newStatus, modifiedRocket.getStatus());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when rocket does not exist while changing rocket status")
+    void shouldThrowExceptionWhenRocketDoesNotExistWhileChangingRocketStatus() {
+        // Given
+        String rocketId = "RocketID";
+        RocketStatus newStatus = RocketStatus.IN_SPACE;
+        when(rocketRepository.findById(anyString())).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> rocketService.changeStatus(rocketId, newStatus));
+        assertEquals("Rocket with ID: RocketID was not found", exception.getMessage());
+        verify(rocketRepository).findById(eq(rocketId));
+        verify(rocketRepository, never()).save(any());
     }
 
     private Rocket buildDefaultRocket(String id) {
