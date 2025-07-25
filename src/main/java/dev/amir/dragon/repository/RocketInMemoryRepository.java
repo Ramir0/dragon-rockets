@@ -32,17 +32,16 @@ public class RocketInMemoryRepository implements RocketRepository {
         if (!memory.containsKey(rocket.getId())) {
             throw new IllegalArgumentException(String.format("Rocket with ID: %s does not exist", rocket.getId()));
         }
-        Rocket savedRocket = new Rocket();
-        savedRocket.setId(rocket.getId());
-        savedRocket.setName(rocket.getName());
-        savedRocket.setStatus(rocket.getStatus());
-        memory.put(savedRocket.getId(), savedRocket);
-        return savedRocket;
+        return save(rocket.getId(), rocket);
     }
 
     private Rocket insert(Rocket rocket) {
+        return save(UUID.randomUUID().toString(), rocket);
+    }
+
+    private Rocket save(String id, Rocket rocket) {
         Rocket savedRocket = new Rocket();
-        savedRocket.setId(UUID.randomUUID().toString());
+        savedRocket.setId(id);
         savedRocket.setName(rocket.getName());
         savedRocket.setStatus(rocket.getStatus());
         memory.put(savedRocket.getId(), savedRocket);
