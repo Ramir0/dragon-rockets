@@ -21,7 +21,7 @@ public class MissionSummaryService {
     }
 
     public List<MissionSummary> generateMissionSummary() {
-        return missionRepository.getAll().stream()
+        return missionRepository.findAll().stream()
                 .map(this::convertToMissionSummary)
                 .sorted(this::compareMissions)
                 .collect(Collectors.toList());

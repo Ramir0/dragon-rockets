@@ -8,6 +8,7 @@ import dev.amir.dragon.repository.MissionRepository;
 import dev.amir.dragon.repository.RocketRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service class to perform mission operations.
@@ -29,7 +30,8 @@ public class MissionService {
     }
 
     public boolean changeStatus(String missionId, MissionStatus newStatus) {
-        Mission existingMission = missionRepository.getById(missionId);
+        Mission existingMission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new IllegalStateException(String.format("Mission with ID: %s was not found", missionId)));
         validateStatusTransition(existingMission, newStatus);
         existingMission.setStatus(newStatus);
         Mission modifiedMission = missionRepository.save(existingMission);
@@ -37,12 +39,13 @@ public class MissionService {
     }
 
     public boolean assignRocketToMission(String missionId, String rocketId) {
-        Mission existingMission = missionRepository.getByRocketId(rocketId);
-        if (existingMission != null) {
+        Optional<Mission> existingMission = missionRepository.findByRocketId(rocketId);
+        if (existingMission.isPresent()) {
             return false;
         }
 
-        Mission mission = missionRepository.getById(missionId);
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new IllegalStateException(String.format("Mission with ID: %s was not found", missionId)));
         if (mission.getStatus() == MissionStatus.ENDED) {
             throw new IllegalStateException("Cannot assign rockets to an ended mission");
         }

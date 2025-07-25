@@ -42,14 +42,14 @@ class MissionSummaryServiceTest {
     @DisplayName("Should generate empty summary")
     void shouldGenerateEmptySummary() {
         // Given
-        when(missionRepository.getAll()).thenReturn(List.of());
+        when(missionRepository.findAll()).thenReturn(List.of());
 
         // When
         List<MissionSummary> summary = missionSummaryService.generateMissionSummary();
 
         // Then
         assertTrue(summary.isEmpty());
-        verify(missionRepository).getAll();
+        verify(missionRepository).findAll();
     }
 
     @Test
@@ -63,13 +63,13 @@ class MissionSummaryServiceTest {
         Rocket rocketC2 = buildRocket("Dragon 2", RocketStatus.IN_SPACE);
         Mission missionC = buildMission("Mars 1", MissionStatus.ENDED, List.of(rocketC1, rocketC2));
         List<Mission> allMissions = List.of(missionA, missionB, missionC);
-        when(missionRepository.getAll()).thenReturn(allMissions);
+        when(missionRepository.findAll()).thenReturn(allMissions);
 
         // When
         List<MissionSummary> summary = missionSummaryService.generateMissionSummary();
 
         // Then
-        verify(missionRepository).getAll();
+        verify(missionRepository).findAll();
         assertEquals(3, summary.size());
         // Mission: Mars 1
         MissionSummary missionSummary1 = summary.removeFirst();
@@ -99,13 +99,13 @@ class MissionSummaryServiceTest {
         Rocket rocketC1 = buildRocket("Red Dragon 1", RocketStatus.ON_GROUND);
         Mission missionC = buildMission("Mars 1", MissionStatus.ENDED, List.of(rocketC1));
         List<Mission> allMissions = List.of(missionA, missionB, missionC);
-        when(missionRepository.getAll()).thenReturn(allMissions);
+        when(missionRepository.findAll()).thenReturn(allMissions);
 
         // When
         List<MissionSummary> summary = missionSummaryService.generateMissionSummary();
 
         // Then
-        verify(missionRepository).getAll();
+        verify(missionRepository).findAll();
         assertEquals(3, summary.size());
         // Mission: Luna 2
         MissionSummary missionSummary1 = summary.removeFirst();

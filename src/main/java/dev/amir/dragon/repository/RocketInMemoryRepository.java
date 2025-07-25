@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class RocketInMemoryRepository implements RocketRepository {
-    private final Map<String, Rocket> memory = new HashMap<>();
+    private final Map<String, Rocket> rocketById = new HashMap<>();
 
     @Override
     public Rocket save(Rocket rocket) {
@@ -17,7 +17,7 @@ public class RocketInMemoryRepository implements RocketRepository {
 
     @Override
     public Optional<Rocket> findById(String id) {
-        Rocket inMemoryRocket = memory.get(id);
+        Rocket inMemoryRocket = rocketById.get(id);
         if (inMemoryRocket == null) {
             return Optional.empty();
         }
@@ -29,7 +29,7 @@ public class RocketInMemoryRepository implements RocketRepository {
     }
 
     private Rocket update(Rocket rocket) {
-        if (!memory.containsKey(rocket.getId())) {
+        if (!rocketById.containsKey(rocket.getId())) {
             throw new IllegalArgumentException(String.format("Rocket with ID: %s does not exist", rocket.getId()));
         }
         return save(rocket.getId(), rocket);
@@ -44,7 +44,7 @@ public class RocketInMemoryRepository implements RocketRepository {
         savedRocket.setId(id);
         savedRocket.setName(rocket.getName());
         savedRocket.setStatus(rocket.getStatus());
-        memory.put(savedRocket.getId(), savedRocket);
+        rocketById.put(savedRocket.getId(), savedRocket);
         return savedRocket;
     }
 }

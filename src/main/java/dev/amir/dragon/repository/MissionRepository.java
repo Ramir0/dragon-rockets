@@ -3,6 +3,7 @@ package dev.amir.dragon.repository;
 import dev.amir.dragon.model.Mission;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface for managing Mission entities.
@@ -10,9 +11,9 @@ import java.util.List;
 public interface MissionRepository {
     Mission save(Mission mission);
 
-    Mission getById(String id);
+    Optional<Mission> findById(String id);
 
-    Mission getByRocketId(String rocketId);
+    Optional<Mission> findByRocketId(String rocketId);
 
-    List<Mission> getAll();
+    List<Mission> findAll();
 }

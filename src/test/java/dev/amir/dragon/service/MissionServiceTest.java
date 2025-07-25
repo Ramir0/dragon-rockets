@@ -79,7 +79,7 @@ class MissionServiceTest {
         String missionId = "Mission ID";
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
         MissionStatus newStatus = MissionStatus.ENDED;
-        when(missionRepository.getById(anyString())).thenReturn(existingMission);
+        when(missionRepository.findById(anyString())).thenReturn(Optional.of(existingMission));
         when(missionRepository.save(any())).thenReturn(new Mission());
 
         // When
@@ -87,10 +87,27 @@ class MissionServiceTest {
 
         // Then
         assertTrue(actual);
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findById(eq(missionId));
         verify(missionRepository).save(missionCaptor.capture());
         Mission modifiedMission = missionCaptor.getValue();
         assertEquals(newStatus, modifiedMission.getStatus());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when mission ID does not exist while setting status")
+    void shouldThrowExceptionWhenMissionIdDoesNotExistWhileSettingStatus() {
+        // Given
+        String fakeMissionId = "FakeMissionId";
+        MissionStatus newStatus = MissionStatus.ENDED;
+        when(missionRepository.findById(anyString())).thenReturn(Optional.empty());
+
+        // When
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.changeStatus(fakeMissionId, newStatus));
+
+        // Then
+        assertEquals(String.format("Mission with ID: %s was not found", fakeMissionId), exception.getMessage());
+        verify(missionRepository).findById(eq(fakeMissionId));
+        verify(missionRepository, never()).save(any());
     }
 
     @Test
@@ -101,13 +118,13 @@ class MissionServiceTest {
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.PENDING);
         existingMission.addRockets(List.of(buildDefaultRocket()));
         MissionStatus newStatus = MissionStatus.SCHEDULED;
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
 
         // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.changeStatus(missionId, newStatus));
         assertEquals("Cannot set mission to SCHEDULED when rockets are assigned", exception.getMessage());
         assertNotEquals(newStatus, existingMission.getStatus());
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findById(eq(missionId));
         verify(missionRepository, never()).save(any());
     }
 
@@ -118,13 +135,13 @@ class MissionServiceTest {
         String missionId = "Mission ID";
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
         MissionStatus newStatus = MissionStatus.PENDING;
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
 
         // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.changeStatus(missionId, newStatus));
         assertEquals("Cannot set mission to PENDING without assigned rockets", exception.getMessage());
         assertNotEquals(newStatus, existingMission.getStatus());
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findById(eq(missionId));
         verify(missionRepository, never()).save(any());
     }
 
@@ -135,13 +152,13 @@ class MissionServiceTest {
         String missionId = "Mission ID";
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
         MissionStatus newStatus = MissionStatus.IN_PROGRESS;
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
 
         // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.changeStatus(missionId, newStatus));
         assertEquals("Cannot set mission to IN_PROGRESS without assigned rockets", exception.getMessage());
         assertNotEquals(newStatus, existingMission.getStatus());
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findById(eq(missionId));
         verify(missionRepository, never()).save(any());
     }
 
@@ -155,13 +172,13 @@ class MissionServiceTest {
         existingRocket.setStatus(RocketStatus.IN_REPAIR);
         existingMission.addRockets(List.of(existingRocket));
         MissionStatus newStatus = MissionStatus.IN_PROGRESS;
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
 
         // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.changeStatus(missionId, newStatus));
         assertEquals("Cannot set mission to IN_PROGRESS when rockets are in repair", exception.getMessage());
         assertNotEquals(newStatus, existingMission.getStatus());
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findById(eq(missionId));
         verify(missionRepository, never()).save(any());
     }
 
@@ -173,13 +190,13 @@ class MissionServiceTest {
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.PENDING);
         existingMission.addRockets(List.of(buildDefaultRocket()));
         MissionStatus newStatus = MissionStatus.ENDED;
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
 
         // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.changeStatus(missionId, newStatus));
         assertEquals("Cannot set mission to ENDED when rockets are assigned", exception.getMessage());
         assertNotEquals(newStatus, existingMission.getStatus());
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findById(eq(missionId));
         verify(missionRepository, never()).save(any());
     }
 
@@ -190,7 +207,7 @@ class MissionServiceTest {
         String missionId = "Mission ID";
         String rocketId = "Rocket ID";
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
-        when(missionRepository.getByRocketId(rocketId)).thenReturn(existingMission);
+        when(missionRepository.findByRocketId(rocketId)).thenReturn(Optional.of(existingMission));
 
         // When
         boolean actual = missionService.assignRocketToMission(missionId, rocketId);
@@ -198,8 +215,8 @@ class MissionServiceTest {
         // Then
         assertFalse(actual);
         assertEquals(MissionStatus.SCHEDULED, existingMission.getStatus());
-        verify(missionRepository).getByRocketId(eq(rocketId));
-        verify(missionRepository, never()).getById(eq(missionId));
+        verify(missionRepository).findByRocketId(eq(rocketId));
+        verify(missionRepository, never()).findById(eq(missionId));
         verify(rocketRepository, never()).findById(eq(rocketId));
         verify(missionRepository, never()).save(eq(existingMission));
     }
@@ -211,17 +228,55 @@ class MissionServiceTest {
         String missionId = "Mission ID";
         String rocketId = "Rocket ID";
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.ENDED);
-        when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findByRocketId(rocketId)).thenReturn(Optional.empty());
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
 
         // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.assignRocketToMission(missionId, rocketId));
         assertEquals("Cannot assign rockets to an ended mission", exception.getMessage());
         assertEquals(MissionStatus.ENDED, existingMission.getStatus());
-        verify(missionRepository).getByRocketId(eq(rocketId));
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findByRocketId(eq(rocketId));
+        verify(missionRepository).findById(eq(missionId));
         verify(rocketRepository, never()).findById(eq(rocketId));
         verify(missionRepository, never()).save(eq(existingMission));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when mission ID does not exist")
+    void shouldThrowExceptionWhenMissionIdDoesNotExist() {
+        // Given
+        String missionId = "MissionID";
+        String rocketId = "RocketID";
+        when(missionRepository.findByRocketId(rocketId)).thenReturn(Optional.empty());
+        when(missionRepository.findById(missionId)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.assignRocketToMission(missionId, rocketId));
+        assertEquals(String.format("Mission with ID: %s was not found", missionId), exception.getMessage());
+        verify(missionRepository).findByRocketId(eq(rocketId));
+        verify(missionRepository).findById(eq(missionId));
+        verify(rocketRepository, never()).findById(any());
+        verify(missionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when rocket ID does not exist")
+    void shouldThrowExceptionWhenRocketIdDoesNotExist() {
+        // Given
+        String missionId = "MissionID";
+        String rocketId = "RocketID";
+        Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
+        when(missionRepository.findByRocketId(rocketId)).thenReturn(Optional.empty());
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
+        when(rocketRepository.findById(rocketId)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> missionService.assignRocketToMission(missionId, rocketId));
+        assertEquals(String.format("Rocket with ID: %s was not found", rocketId), exception.getMessage());
+        verify(missionRepository).findByRocketId(eq(rocketId));
+        verify(missionRepository).findById(eq(missionId));
+        verify(rocketRepository).findById(eq(rocketId));
+        verify(missionRepository, never()).save(any());
     }
 
     @Test
@@ -233,8 +288,8 @@ class MissionServiceTest {
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
         Rocket existingRocket = buildDefaultRocket();
         existingRocket.setStatus(RocketStatus.IN_REPAIR);
-        when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findByRocketId(rocketId)).thenReturn(Optional.empty());
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
         when(rocketRepository.findById(rocketId)).thenReturn(Optional.of(existingRocket));
         when(missionRepository.save(any(Mission.class))).thenReturn(existingMission);
 
@@ -245,8 +300,8 @@ class MissionServiceTest {
         assertTrue(actual);
         assertTrue(existingMission.getRockets().contains(existingRocket));
         assertEquals(MissionStatus.PENDING, existingMission.getStatus());
-        verify(missionRepository).getByRocketId(eq(rocketId));
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findByRocketId(eq(rocketId));
+        verify(missionRepository).findById(eq(missionId));
         verify(rocketRepository).findById(eq(rocketId));
         verify(missionRepository).save(eq(existingMission));
     }
@@ -259,8 +314,8 @@ class MissionServiceTest {
         String rocketId = "Rocket ID";
         Mission existingMission = buildDefaultMission(missionId, MissionStatus.SCHEDULED);
         Rocket existingRocket = buildDefaultRocket();
-        when(missionRepository.getByRocketId(rocketId)).thenReturn(null);
-        when(missionRepository.getById(missionId)).thenReturn(existingMission);
+        when(missionRepository.findByRocketId(rocketId)).thenReturn(Optional.empty());
+        when(missionRepository.findById(missionId)).thenReturn(Optional.of(existingMission));
         when(rocketRepository.findById(rocketId)).thenReturn(Optional.of(existingRocket));
         when(missionRepository.save(any(Mission.class))).thenReturn(existingMission);
 
@@ -271,8 +326,8 @@ class MissionServiceTest {
         assertTrue(actual);
         assertTrue(existingMission.getRockets().contains(existingRocket));
         assertEquals(MissionStatus.IN_PROGRESS, existingMission.getStatus());
-        verify(missionRepository).getByRocketId(eq(rocketId));
-        verify(missionRepository).getById(eq(missionId));
+        verify(missionRepository).findByRocketId(eq(rocketId));
+        verify(missionRepository).findById(eq(missionId));
         verify(rocketRepository).findById(eq(rocketId));
         verify(missionRepository).save(eq(existingMission));
     }
